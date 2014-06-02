@@ -1,6 +1,6 @@
 {
   "name": "puppet-hiera",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Module to interface with a hiera database",
   "main": "index.js",
   "repository": "https://github.com/olindata/node-puppet-hiera",
@@ -10,6 +10,13 @@
   "dependencies": {
     "js-yaml": "^3.0.2"
   },
-  "author": "",
+  "author": {
+    "name" : "Walter Heck",
+    "email": "walterheck@olindata.com"
+  },
+  "contributors": [ {
+    "name": "Raj Kissu Rajandran",
+    "email": "raj@olindata.com"
+  } ],
   "license": "ISC"
 }
