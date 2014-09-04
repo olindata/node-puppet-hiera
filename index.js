@@ -9,6 +9,10 @@ function getConfig(file) {
   return yaml.safeLoad(fs.readFileSync(file, 'utf8'));
 }
 
+function saveConfig(file, data) {
+  return fs.writeFileSync(file, yaml.safeDump(data));
+}
+
 function getHierarchy(file) {
   var hieraConfig = getConfig(file);
 
@@ -29,6 +33,7 @@ function getBackendConfig(file, backend) {
 
 module.exports = {
   getConfig        : getConfig,
+  saveConfig       : saveConfig,
   getHierarchy     : getHierarchy,
   getBackends      : getBackends,
   getBackendConfig : getBackendConfig
