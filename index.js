@@ -1,34 +1,35 @@
-var yaml    = require('js-yaml');
-var fs      = require('fs');
+'use strict';
 
-var getHieraConfig = function(hieraConfigFile) {
-  return(yaml.safeLoad(fs.readFileSync(hieraConfigFile, 'utf8')));
+var yaml, fs;
+
+yaml = require('js-yaml');
+fs   = require('fs');
+
+function getConfig(file) {
+  return yaml.safeLoad(fs.readFileSync(file, 'utf8'));
 }
 
-var getHieraHierarchies = function(hieraConfigFile) {
+function getHierarchies(file) {
+  var hieraConfig = getConfig(file);
 
-  var hieraConfig = getHieraConfig(hieraConfigFile);
-
-  return(hieraConfig[':hierarchy']);
-
+  return hieraConfig[':hierarchy'];
 }
 
-var getHieraBackends = function(hieraConfigFile) {
-  
-  var hieraConfig = getHieraConfig(hieraConfigFile);
+function getBackends(file) {
+  var hieraConfig = getConfig(file);
 
-  return(hieraConfig[':backends']);
-  
+  return hieraConfig[':backends'];
 }
 
-var getHieraBackendConfig = function(hieraConfigFile, hieraBackend) {
-  
-  var hieraConfig = getHieraConfig(hieraConfigFile);
+function getBackendConfig(file, backend) {
+  var hieraConfig = getConfig(file);
 
-  return(hieraConfig[':' + hieraBackend]);
-  
+  return hieraConfig[':' + backend];
 }
 
-exports.getHieraHierarchies = getHieraHierarchies;
-exports.getHieraBackends = getHieraBackends;
-exports.getHieraBackendConfig = getHieraBackendConfig;
+module.exports = {
+  getConfig        : getConfig,
+  getHierarchies   : getHierarchies,
+  getBackends      : getBackends,
+  getBackendConfig : getBackendConfig
+};
