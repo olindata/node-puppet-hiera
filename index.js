@@ -9,7 +9,7 @@ function getConfig(file) {
   return yaml.safeLoad(fs.readFileSync(file, 'utf8'));
 }
 
-function getHierarchies(file) {
+function getHierarchy(file) {
   var hieraConfig = getConfig(file);
 
   return hieraConfig[':hierarchy'];
@@ -29,7 +29,7 @@ function getBackendConfig(file, backend) {
 
 module.exports = {
   getConfig        : getConfig,
-  getHierarchies   : getHierarchies,
+  getHierarchy     : getHierarchy,
   getBackends      : getBackends,
   getBackendConfig : getBackendConfig
 };
