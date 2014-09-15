@@ -1,10 +1,12 @@
 'use strict';
 
-var fs, yaml, j2y;
+var fs, path, yaml, j2y, traverse;
 
-fs   = require('fs');
-yaml = require('js-yaml');
-j2y  = require('json2yaml');
+fs       = require('fs');
+path     = require('path');
+yaml     = require('js-yaml');
+j2y      = require('json2yaml');
+traverse = require('./lib/traverse');
 
 function getConfig(configFile) {
   return yaml.safeLoad(fs.readFileSync(configFile, 'utf8'));
@@ -26,11 +28,16 @@ function getBackends(configFile) {
   return hieraConfig[':backends'];
 }
 
-function getFiles(configFile, backend) {
-  // TODO: traverse directories
+function getBackendConfig(configFile, backend) {
+  var hieraConfig = getConfig(configFile);
+
+  return hieraConfig[':' + backend];
+}
+
+function getFiles(configFile, backend, cb) {
   backend = getBackendConfig(configFile, backend);
 
-  return fs.readdirSync(backend[':datadir']);
+  traverse(backend[':datadir'], cb);
 }
 
 function getFile(configFile, backend, file) {
@@ -43,10 +50,15 @@ function getFile(configFile, backend, file) {
   return fs.readFileSync(file, 'utf8');
 }
 
-function getBackendConfig(configFile, backend) {
-  var hieraConfig = getConfig(configFile);
+function saveFile(configFile, backend, file, data, cb) {
+  var config, datadir;
 
-  return hieraConfig[':' + backend];
+  cb      = Object.isFunction(cb) ? cb : function () {};
+  config  = getBackendConfig(configFile, backend);
+  datadir = config[':datadir'];
+  file    = path.join(datadir, file);
+
+  fs.writeFile(file, data, 'utf8', cb);
 }
 
 module.exports = {
@@ -56,5 +68,6 @@ module.exports = {
   getBackends      : getBackends,
   getBackendConfig : getBackendConfig,
   getFiles         : getFiles,
-  getFile          : getFile
+  getFile          : getFile,
+  saveFile         : saveFile
 };
