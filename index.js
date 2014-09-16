@@ -1,12 +1,11 @@
 'use strict';
 
-var fs, path, yaml, j2y, traverse;
+var fs, path, yaml, j2y;
 
 fs       = require('fs');
 path     = require('path');
 yaml     = require('js-yaml');
 j2y      = require('json2yaml');
-traverse = require('./lib/traverse');
 
 function getConfig(configFile) {
   return yaml.safeLoad(fs.readFileSync(configFile, 'utf8'));
@@ -32,12 +31,6 @@ function getBackendConfig(configFile, backend) {
   var hieraConfig = getConfig(configFile);
 
   return hieraConfig[':' + backend];
-}
-
-function getFiles(configFile, backend, cb) {
-  backend = getBackendConfig(configFile, backend);
-
-  traverse(backend[':datadir'], cb);
 }
 
 function getFile(configFile, backend, file) {
@@ -67,7 +60,6 @@ module.exports = {
   getHierarchy     : getHierarchy,
   getBackends      : getBackends,
   getBackendConfig : getBackendConfig,
-  getFiles         : getFiles,
   getFile          : getFile,
   saveFile         : saveFile
 };
