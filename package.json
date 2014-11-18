@@ -1,6 +1,6 @@
 {
   "name": "puppet-hiera",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Module to interface with a hiera database",
   "main": "index.js",
   "repository": "https://github.com/olindata/node-puppet-hiera",
@@ -9,13 +9,12 @@
   },
   "dependencies": {
     "js-yaml": "^3.2.1",
-    "json2yaml": "^1.0.3",
-    "sinon": "^1.11.1",
-    "sugar": "^1.4.1"
+    "json2yaml": "^1.0.3"
   },
   "devDependencies": {
-    "chai": "^1.9.2",
     "mocha": "^2.0.1"
+    "chai": "^1.10.0",
+    "async": "^0.9.0",
   },
   "author": {
     "name": "Walter Heck",

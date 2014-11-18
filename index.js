@@ -89,14 +89,19 @@ function getBackends(configFile, cb) {
  *
  * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
- * @returns {Object} a Hiera backend.
+ * @param {Function} cb - callback to invoke.
  *
- * @example getBackendConfig('/path/to/hiera.yaml', 'yaml');
+ * @example getBackendConfig('/path/to/hiera.yaml', 'yaml', cb);
  */
-function getBackendConfig(configFile, backend) {
-  var hieraConfig = getConfig(configFile);
+function getBackendConfig(configFile, backend, cb) {
+  getConfig(configFile, function (err, config) {
+    if (err) {
+      cb(err);
+      return;
+    }
 
-  return hieraConfig[':' + backend];
+    cb(null, config[':' + backend]);
+  });
 }
 
 /**
@@ -105,18 +110,16 @@ function getBackendConfig(configFile, backend) {
  * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
  * @param {string} file - the Hiera file to load.
- * @returns {Object} a Hiera file data.
+ * @param {Function} cb - callback to invoke.
  *
- * @example getFile('/path/to/hiera.yaml', 'yaml');
+ * @example getFile('/path/to/hiera.yaml', 'yaml', 'defaults.yaml', cb);
  */
-function getFile(configFile, backend, file) {
-  var config, datadir;
+function getFile(configFile, backend, file, cb) {
+  getBackendConfig(configFile, backend, function (err, config) {
+    file = [ config[':datadir'], '/', file ].join('');
 
-  config  = getBackendConfig(configFile, backend);
-  datadir = config[':datadir'];
-  file    = [ datadir, '/', file ].join('');
-
-  return fs.readFileSync(file, 'utf8');
+    fs.readFile(file, 'utf8', cb);
+  });
 }
 
 /**
@@ -135,14 +138,14 @@ function getFile(configFile, backend, file) {
  * );
  */
 function saveFile(configFile, backend, file, data, cb) {
-  var config, datadir;
+  cb = typeof(cb) === 'function' ? cb : function () {};
 
-  cb      = Object.isFunction(cb) ? cb : function () {};
-  config  = getBackendConfig(configFile, backend);
-  datadir = config[':datadir'];
-  file    = path.join(datadir, file);
+  getBackendConfig(configFile, backend, function (err, config) {
+    var datadir = config[':datadir'];
+    file = path.join(datadir, file);
 
-  fs.writeFile(file, data, 'utf8', cb);
+    fs.writeFile(file, data, 'utf8', cb);
+  });
 }
 
 module.exports = {
