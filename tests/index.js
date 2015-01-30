@@ -26,21 +26,24 @@ fixture = {
       {
         file : __dirname + '/yaml/teams.yaml',
         data : {
-          akey : 'teamsdata'
+          akey : 'teamsAKey'
         }
       },
 
       {
         file : __dirname + '/yaml/common.yaml',
         data : {
-          akey : 'commondata'
+          akey : 'commonAKey',
+          bkey : 'commonBKey'
         }
       },
 
       {
         file : __dirname + '/yaml/defaults.yaml',
         data : {
-          akey : 'defaultsdata'
+          akey : 'defaultsAKey',
+          bkey : 'defaultsBKey',
+          ckey : 'defaultsCKey'
         }
       }
     ],
@@ -227,7 +230,7 @@ suite('puppet-hiera', function () {
         function (err, overrides) {
           assert.isNull(err);
           assert.isNotNull(overrides);
-          assert.isArray(overrides);
+          assert.isObject(overrides);
 
           done();
         }

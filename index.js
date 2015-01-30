@@ -211,7 +211,7 @@ function getOverrides(configFile, backend, file, cb) {
           });
         });
       }, function (err, comparisonData) {
-        var overrideList = [];
+        var list = {};
 
         if (err) {
           cb(err);
@@ -222,16 +222,21 @@ function getOverrides(configFile, backend, file, cb) {
           comparisonData.each(function (set) {
             Object.each(set.data, function (cKey, cValue) {
               if (cKey === key) {
-                overrideList.push({
-                  file : set.file,
-                  key  : cKey
-                });
+                list[cKey] = {
+                  file  : set.file,
+                  value : cValue
+                };
               }
             });
+
+            if (list[key]) {
+              // already exists
+              return false;
+            }
           });
         });
 
-        cb(null, overrideList);
+        cb(null, list);
       });
     });
   });
