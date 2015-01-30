@@ -16,56 +16,90 @@ fixture = {
 
   config     : {
     ':backends'  : [ 'yaml', 'gpg' ],
-    ':hierarchy' : [ 'defaults', 'common' ],
+    ':hierarchy' : [ 'teams', 'common', 'defaults' ],
     ':yaml'      : { ':datadir' : __dirname + '/yaml' },
     ':gpg'       : { ':datadir' : __dirname + '/gpg' }
   },
 
   hiera     : {
-    yaml : {
-      file : __dirname + '/yaml/defaults.yaml',
-      data : {
-        akey : 'somedata'
-      }
-    },
+    yaml : [
+      {
+        file : __dirname + '/yaml/teams.yaml',
+        data : {
+          akey : 'teamsdata'
+        }
+      },
 
-    gpg : {
-      file : __dirname + '/gpg/defaults.yaml',
-      data : {
-        akey : 'somedata'
+      {
+        file : __dirname + '/yaml/common.yaml',
+        data : {
+          akey : 'commondata'
+        }
+      },
+
+      {
+        file : __dirname + '/yaml/defaults.yaml',
+        data : {
+          akey : 'defaultsdata'
+        }
       }
-    }
+    ],
+
+    gpg : [
+      {
+        file : __dirname + '/gpg/defaults.yaml',
+        data : {
+          akey : 'somedata'
+        }
+      }
+    ]
   }
 };
 
 suite('puppet-hiera', function () {
   before(function (done) {
     async.series([
-      function (cb) {
+      function createYamlDir(cb) {
         fs.mkdir(fixture.config[':yaml'][':datadir'], cb);
       },
 
-      function (cb) {
-        fs.writeFile(
-          fixture.hiera.yaml.file,
-          j2y.stringify(fixture.hiera.yaml.data),
-          cb
-        );
+      function createYaml(cb) {
+        var tasks = [];
+
+        fixture.hiera.yaml.each(function (item) {
+          tasks.push(function (cb) {
+            fs.writeFile(
+              item.file,
+              j2y.stringify(item.data),
+              cb
+            );
+          });
+        });
+
+        async.parallel(tasks, cb);
       },
 
-      function (cb) {
+      function createGpgDir(cb) {
         fs.mkdir(fixture.config[':gpg'][':datadir'], cb);
       },
 
-      function (cb) {
-        fs.writeFile(
-          fixture.hiera.gpg.file,
-          j2y.stringify(fixture.hiera.gpg.data),
-          cb
-        );
+      function createGpg(cb) {
+        var tasks = [];
+
+        fixture.hiera.gpg.each(function (item) {
+          tasks.push(function (cb) {
+            fs.writeFile(
+              item.file,
+              j2y.stringify(item.data),
+              cb
+            );
+          });
+        });
+
+        async.parallel(tasks, cb);
       },
 
-      function (cb) {
+      function createHieraConfigFile(cb) {
         fs.writeFile(
           fixture.configFile,
           j2y.stringify(fixture.config),
@@ -91,7 +125,6 @@ suite('puppet-hiera', function () {
     test('throws error when configuration file does not exist', function (done) {
       hiera.getConfig(fixture.nonFile, function (err) {
         assert.instanceOf(err, Error);
-        assert.propertyVal(err, 'errno', -2);
         assert.propertyVal(err, 'code', 'ENOENT');
 
 
@@ -160,7 +193,7 @@ suite('puppet-hiera', function () {
     test('gets key-value data from a Hiera file', function (done) {
       hiera.getFile(
         fixture.configFile, 'yaml',
-        path.basename(fixture.hiera.yaml.file),
+        path.basename(fixture.hiera.yaml[0].file),
         function (err, data) {
           assert.isNull(err);
           assert.isNotNull(data);
@@ -175,8 +208,8 @@ suite('puppet-hiera', function () {
     test('saves key-value data to a Hiera file', function (done) {
       hiera.saveFile(
         fixture.configFile, 'yaml',
-        path.basename(fixture.hiera.yaml.file),
-        j2y.stringify(fixture.hiera.yaml.data),
+        path.basename(fixture.hiera.yaml[0].file),
+        j2y.stringify(fixture.hiera.yaml[0].data),
         function (err) {
           assert.isNull(err);
 
@@ -186,14 +219,46 @@ suite('puppet-hiera', function () {
     });
   });
 
+  suite('#getOverrides', function () {
+    test('returns overriding keys if present', function (done) {
+      hiera.getOverrides(
+        fixture.configFile, 'yaml',
+        path.basename(fixture.hiera.yaml.last().file),
+        function (err, overrides) {
+          assert.isNull(err);
+          assert.isNotNull(overrides);
+          assert.isArray(overrides);
+
+          done();
+        }
+      );
+    });
+  });
+
   after(function (done) {
     async.series([
-      function (cb) {
-        fs.unlink(fixture.hiera.yaml.file, cb);
+      function removeYaml(cb) {
+        var tasks = [];
+
+        fixture.hiera.yaml.each(function (item) {
+          tasks.push(function (cb) {
+            fs.unlink(item.file, cb);
+          });
+        });
+
+        async.parallel(tasks, cb);
       },
 
-      function (cb) {
-        fs.unlink(fixture.hiera.gpg.file, cb);
+      function removeGpg(cb) {
+        var tasks = [];
+
+        fixture.hiera.gpg.each(function (item) {
+          tasks.push(function (cb) {
+            fs.unlink(item.file, cb);
+          });
+        });
+
+        async.parallel(tasks, cb);
       },
 
       function (cb) {
