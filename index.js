@@ -7,7 +7,7 @@
 /* jslint node: true */
 'use strict';
 
-var fs, path, async, yaml, j2y;
+var fs, path, async, yaml, j2y, git;
 
 require('sugar');
 
@@ -16,6 +16,11 @@ path  = require('path');
 async = require('async');
 yaml  = require('js-yaml');
 j2y   = require('json2yaml');
+git   = require('nodegit');
+
+var _repository, _signature, _oid;
+
+_signature = git.Signature.create('Raj Kissu', 'rajkissu@gmail.com', 123456789, 60);
 
 /**
  * Retrieves Hiera configuration.
@@ -46,7 +51,68 @@ function getConfig(configFile, cb) {
  * @example saveConfig('/path/to/hiera.yaml', hieraConfig, cb);
  */
 function saveConfig(configFile, data, cb) {
-  fs.writeFile(configFile, j2y.stringify(data), cb);
+  fs.writeFile(configFile, j2y.stringify(data), function (err) {
+    if (err) {
+      cb(err);
+      return;
+    }
+
+    git.Repository.open(path.resolve(__dirname, '/home/rajkissu/Downloads/hiera-test/.git'))
+    .then(function (repo) {
+      _repository = repo;
+
+      return repo.openIndex();
+    })
+    .then(function (index) {
+      index.read();
+      index.addByPath('hiera.yaml');
+      index.write();
+
+      return index.writeTree();
+    })
+    .then(function (oid) {
+      _oid = oid;
+
+      return git.Reference.nameToId(_repository, 'HEAD');
+    })
+    .then(function (head) {
+      return _repository.getCommit(head);
+    })
+    .then(function (parent) {
+      return _repository.createCommit('HEAD', _signature, _signature, 'Saves hiera.yaml', _oid, [ parent ]);
+    })
+    .then(function () {
+      return git.Remote.create(_repository, 'origin', 'git@github.com:rajkissu/hiera-test.git')
+        .then(function (remote) {
+          remote.connect(nodegit.Enums.DIRECTION.PUSH);
+
+          var push;
+
+          // We need to set the auth on the remote, not the push object
+          remote.setCallbacks({
+            credentials: function(url, userName) {
+              return nodegit.Cred.sshKeyFromAgent(userName);
+            }
+          });
+
+          // Create the push object for this remote
+          return nodegit.Push.create(remote)
+          .then(function(pushResult) {
+            push = pushResult;
+
+            // This just says what branch we're pushing onto what remote branch
+            return push.addRefspec("refs/heads/master:refs/heads/master");
+          }).then(function() {
+            // This is the call that performs the actual push
+            return push.finish();
+          }).then(function() {
+            // Check to see if the remote accepted our push request.
+            return push.unpackOk();
+          });
+        });
+    })
+    .done(cb);
+  });
 }
 
 /**
@@ -147,7 +213,63 @@ function saveFile(configFile, backend, file, data, cb) {
     var datadir = config[':datadir'];
     file = path.join(datadir, file);
 
-    fs.writeFile(file, data, 'utf8', cb);
+    fs.writeFile(file, data, 'utf8', cbfunction () {
+      git.Repository.open(path.resolve(__dirname, '/home/rajkissu/Downloads/hiera-test/.git'))
+      .then(function (repo) {
+        _repository = repo;
+
+        return repo.openIndex();
+      })
+      .then(function (index) {
+        index.read();
+        index.addByPath(file);
+        index.write();
+
+        return index.writeTree();
+      })
+      .then(function (oid) {
+        _oid = oid;
+
+        return git.Reference.nameToId(_repository, 'HEAD');
+      })
+      .then(function (head) {
+        return _repository.getCommit(head);
+      })
+      .then(function (parent) {
+        return _repository.createCommit('HEAD', _signature, _signature, 'Saves hiera.yaml', _oid, [ parent ]);
+      })
+      .then(function () {
+        return git.Remote.create(_repository, 'origin', 'git@github.com:rajkissu/hiera-test.git')
+          .then(function (remote) {
+            remote.connect(nodegit.Enums.DIRECTION.PUSH);
+
+            var push;
+
+            // We need to set the auth on the remote, not the push object
+            remote.setCallbacks({
+              credentials: function(url, userName) {
+                return nodegit.Cred.sshKeyFromAgent(userName);
+              }
+            });
+
+            // Create the push object for this remote
+            return nodegit.Push.create(remote)
+            .then(function(pushResult) {
+              push = pushResult;
+
+              // This just says what branch we're pushing onto what remote branch
+              return push.addRefspec("refs/heads/master:refs/heads/master");
+            }).then(function() {
+              // This is the call that performs the actual push
+              return push.finish();
+            }).then(function() {
+              // Check to see if the remote accepted our push request.
+              return push.unpackOk();
+            });
+          });
+      })
+      .done(cb);
+    });
   });
 }
 
