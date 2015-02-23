@@ -7,7 +7,7 @@
 /* jslint node: true */
 'use strict';
 
-var fs, path, async, yaml, j2y;
+var path, async, yaml, File, fs;
 
 require('sugar');
 
@@ -15,50 +15,51 @@ fs    = require('fs');
 path  = require('path');
 async = require('async');
 yaml  = require('js-yaml');
-j2y   = require('json2yaml');
+File  = require('./adapters/file');
+
+/**
+ * Initializes the Hiera module.
+ *
+ * @param {string} configFile - the path to `hiera.yaml`.
+ *
+ * @example init('/path/to/hiera.yaml');
+ */
+function init(configFile) {
+  fs = new File(configFile);
+}
 
 /**
  * Retrieves Hiera configuration.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {Function} cb - callback to invoke.
  *
- * @example getConfig('/path/to/hiera.yaml', cb);
+ * @example getConfig(cb);
  */
-function getConfig(configFile, cb) {
-  fs.readFile(configFile, 'utf8', function (err, data) {
-    if (err) {
-      cb(err);
-      return;
-    }
-
-    cb(null, yaml.safeLoad(data));
-  });
+function getConfig(cb) {
+  fs.readConfig(cb);
 }
 
 /**
  * Saves Hiera configuration to file.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {Object} data - an object loaded with hiera configuration.
  * @param {Function} cb - callback to invoke.
  *
- * @example saveConfig('/path/to/hiera.yaml', hieraConfig, cb);
+ * @example saveConfig(hieraConfig, cb);
  */
-function saveConfig(configFile, data, cb) {
-  fs.writeFile(configFile, j2y.stringify(data), cb);
+function saveConfig(data, cb) {
+  fs.saveConfig(data, cb);
 }
 
 /**
  * Gets the Hiera hierarchy.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {Function} cb - callback to invoke.
  *
- * @example getHierarchy('/path/to/hiera.yaml', cb);
+ * @example getHierarchy(cb);
  */
-function getHierarchy(configFile, cb) {
-  getConfig(configFile, function (err, config) {
+function getHierarchy(cb) {
+  getConfig(function (err, config) {
     if (err) {
       cb(err);
       return;
@@ -71,13 +72,12 @@ function getHierarchy(configFile, cb) {
 /**
  * Retrieves all Hiera backend configurations.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {Function} cb - callback to invoke.
  *
- * @example getBackends('/path/to/hiera.yaml', cb);
+ * @example getBackends(cb);
  */
-function getBackends(configFile, cb) {
-  getConfig(configFile, function (err, config) {
+function getBackends(cb) {
+  getConfig(function (err, config) {
     if (err) {
       cb(err);
       return;
@@ -90,14 +90,13 @@ function getBackends(configFile, cb) {
 /**
  * Gets configuration for a specific backend.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
  * @param {Function} cb - callback to invoke.
  *
- * @example getBackendConfig('/path/to/hiera.yaml', 'yaml', cb);
+ * @example getBackendConfig('yaml', cb);
  */
-function getBackendConfig(configFile, backend, cb) {
-  getConfig(configFile, function (err, config) {
+function getBackendConfig(backend, cb) {
+  getConfig(function (err, config) {
     if (err) {
       cb(err);
       return;
@@ -110,68 +109,63 @@ function getBackendConfig(configFile, backend, cb) {
 /**
  * Retrieves data from a Hiera file.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
  * @param {string} file - the Hiera file to load.
  * @param {Function} cb - callback to invoke.
  *
- * @example getFile('/path/to/hiera.yaml', 'yaml', 'defaults.yaml', cb);
+ * @example getFile('yaml', 'defaults.yaml', function (err, data) { ... });
  */
-function getFile(configFile, backend, file, cb) {
-  getBackendConfig(configFile, backend, function (err, config) {
+function getFile(backend, file, cb) {
+  getBackendConfig(backend, function (err, config) {
     file = [ config[':datadir'], '/', file ].join('');
 
-    fs.readFile(file, 'utf8', cb);
+    fs.readFile(file, cb);
   });
 }
 
 /**
  * Saves data to a Hiera file.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
  * @param {string} file - the Hiera file to save to.
  * @param {Object} data - contents to save to the Hiera file.
  * @param {Function} cb - callback to invoke once file saving completes.
  *
  * @example saveFile(
- *  '/path/to/hiera.yaml', 'gpg',
- *  '/path/to/file.gpg', fileData,
+ *  'gpg', '/path/to/file.gpg', fileData,
  *  function (err) { ... }
  * );
  */
-function saveFile(configFile, backend, file, data, cb) {
+function saveFile(backend, file, data, cb) {
   cb = typeof(cb) === 'function' ? cb : function () {};
 
-  getBackendConfig(configFile, backend, function (err, config) {
+  getBackendConfig(backend, function (err, config) {
     var datadir = config[':datadir'];
     file = path.join(datadir, file);
 
-    fs.writeFile(file, data, 'utf8', cb);
+    fs.writeFile(file, data, cb);
   });
 }
 
 /**
  * Check for hierarchy overrides for a given file.
  *
- * @param {string} configFile - the path to `hiera.yaml`.
  * @param {string} backend - the backend to load.
  * @param {string} file - the Hiera file to check overrides for.
  * @param {Function} cb - callback to invoke once override checking completes.
  *
  * @example getOverrides(
- *  '/path/to/hiera.yaml', 'gpg',
- *  '/path/to/file.gpg', function (err) { ... }
+ *  'gpg', '/path/to/file.gpg', function (err) { ... }
  * );
  */
-function getOverrides(configFile, backend, file, cb) {
+function getOverrides(backend, file, cb) {
   async.parallel([
     function hierarchy(cb) {
-      getHierarchy(configFile, cb);
+      getHierarchy(cb);
     },
 
     function backendConfig(cb) {
-      getBackendConfig(configFile, backend, cb);
+      getBackendConfig(backend, cb);
     }
   ], function (err, results) {
     var hierarchy, datadir, filename, tasks,
@@ -186,7 +180,7 @@ function getOverrides(configFile, backend, file, cb) {
     pos = hierarchy.findIndex(filename);
     searchHierarchy = hierarchy.to(pos);
 
-    getFile(configFile, backend, file, function (err, data) {
+    getFile(backend, file, function (err, data) {
       var sourceData;
 
       if (err) {
@@ -204,7 +198,7 @@ function getOverrides(configFile, backend, file, cb) {
       async.map(tasks, function (f, cb) {
         // get data for each file in the hierarchy
         // TODO: support magic hiera vars
-        getFile(configFile, backend, f, function (err, data) {
+        getFile(backend, f, function (err, data) {
           cb(null, {
             file : f,
             data : yaml.safeLoad(data)
@@ -243,6 +237,7 @@ function getOverrides(configFile, backend, file, cb) {
 }
 
 module.exports = {
+  init             : init,
   getConfig        : getConfig,
   saveConfig       : saveConfig,
   getHierarchy     : getHierarchy,

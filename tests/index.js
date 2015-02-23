@@ -112,9 +112,16 @@ suite('puppet-hiera', function () {
     ], done);
   });
 
+  suite('#init()', function () {
+    test('initializes Hiera module', function (done) {
+      hiera.init(fixture.configFile);
+      done();
+    });
+  });
+
   suite('#getConfig()', function () {
     test('retrieves configuration', function (done) {
-      hiera.getConfig(fixture.configFile, function (err, config) {
+      hiera.getConfig(function (err, config) {
         assert.isNull(err);
         assert.isNotNull(config);
 
@@ -124,22 +131,11 @@ suite('puppet-hiera', function () {
         done();
       });
     });
-
-    test('throws error when configuration file does not exist', function (done) {
-      hiera.getConfig(fixture.nonFile, function (err) {
-        assert.instanceOf(err, Error);
-        assert.propertyVal(err, 'code', 'ENOENT');
-
-
-        done();
-      });
-    });
   });
 
   suite('#saveConfig()', function () {
     test('saves configuration', function (done) {
       hiera.saveConfig(
-        fixture.configFile,
         fixture.config,
         function (err) {
           assert.isNull(err);
@@ -153,7 +149,6 @@ suite('puppet-hiera', function () {
   suite('#getHierarchy', function () {
     test('gets the hierarchy order', function (done) {
       hiera.getHierarchy(
-        fixture.configFile,
         function (err, hierarchy) {
           assert.isNull(err);
           assert.isNotNull(hierarchy);
@@ -167,7 +162,6 @@ suite('puppet-hiera', function () {
   suite('#getBackends', function () {
     test('gets supported backends', function (done) {
       hiera.getBackends(
-        fixture.configFile,
         function (err, backends) {
           assert.isNull(err);
           assert.isNotNull(backends);
@@ -181,8 +175,7 @@ suite('puppet-hiera', function () {
   suite('#getBackendConfig', function () {
     test('gets configuration for a specific backend', function (done) {
       hiera.getBackendConfig(
-        fixture.configFile, 'yaml',
-        function (err, backend) {
+        'yaml', function (err, backend) {
           assert.isNull(err);
           assert.isNotNull(backend);
 
@@ -195,7 +188,7 @@ suite('puppet-hiera', function () {
   suite('#getFile', function () {
     test('gets key-value data from a Hiera file', function (done) {
       hiera.getFile(
-        fixture.configFile, 'yaml',
+        'yaml',
         path.basename(fixture.hiera.yaml[0].file),
         function (err, data) {
           assert.isNull(err);
@@ -210,7 +203,7 @@ suite('puppet-hiera', function () {
   suite('#saveFile', function () {
     test('saves key-value data to a Hiera file', function (done) {
       hiera.saveFile(
-        fixture.configFile, 'yaml',
+        'yaml',
         path.basename(fixture.hiera.yaml[0].file),
         j2y.stringify(fixture.hiera.yaml[0].data),
         function (err) {
@@ -225,7 +218,7 @@ suite('puppet-hiera', function () {
   suite('#getOverrides', function () {
     test('returns overriding keys if present', function (done) {
       hiera.getOverrides(
-        fixture.configFile, 'yaml',
+        'yaml',
         path.basename(fixture.hiera.yaml.last().file),
         function (err, overrides) {
           assert.isNull(err);
