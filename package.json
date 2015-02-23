@@ -1,6 +1,6 @@
 {
   "name": "puppet-hiera",
-  "version": "0.0.14",
+  "version": "0.1.0",
   "description": "Module to interface with a hiera database",
   "main": "index.js",
   "repository": "https://github.com/olindata/node-puppet-hiera",

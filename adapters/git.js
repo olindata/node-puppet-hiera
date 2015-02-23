@@ -104,3 +104,5 @@ class Git {
     .done(cb);
   }
 }
+
+module.exports = Git;
