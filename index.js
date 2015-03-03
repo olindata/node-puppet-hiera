@@ -11,7 +11,6 @@ var path, async, yaml, File, fs;
 
 require('sugar');
 
-fs    = require('fs');
 path  = require('path');
 async = require('async');
 yaml  = require('js-yaml');
@@ -24,8 +23,10 @@ File  = require('./adapters/file');
  *
  * @example init('/path/to/hiera.yaml');
  */
-function init(configFile) {
-  fs = new File(configFile);
+function init(config) {
+  if (!fs) {
+    fs = new File(config.configFile);
+  }
 }
 
 /**
