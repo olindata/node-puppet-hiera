@@ -7,30 +7,35 @@
 /* jslint node: true */
 'use strict';
 
-var git = require('nodegit');
+var path, git, File;
+
+path = require('path');
+git  = require('nodegit');
+File = require('./file');
 
 /**
  * The Git adapter class.
  *
  * @class Git
  */
-class Git {
+class Git extends File {
   /**
    * The Git constructor.
    *
    * @constructor
    *
-   * @param {string} repo - the configuration file path.
-   * @param {string} signature - the configuration file path.
+   * @param {Object} config - configuration options.
    *
-   * @example new File('/path/to/hiera.yaml');
+   * @example new Git({
+   *   repo : '/path/to/repo.git',
+   *   signature : [ 'Name', '<email>', '123131', 60)
+   * });
    */
-  constructor(repo, signature) {
-    this.repo = repo;
-    this.signature = signature;
+  constructor(config) {
+    super(config);
 
-    this.repo = '/home/rajkissu/Downloads/hiera-test/.git';
-    this.signature = git.Signature.create('Raj Kissu', 'rajkissu@gmail.com', 123456789, 60);
+    this.repo = config.repo;
+    this.signature = git.Signature.create.apply(git.Signature, config.signature);
   }
 
   /**
@@ -45,9 +50,11 @@ class Git {
    * @example
    */
   writeFile(file, data, cb) {
-    var _repository;
+    var me, _repository, _oid;
 
-    git.Repository.open(path.resolve(__dirname, this.repo))
+    me = this;
+
+    git.Repository.open(path.resolve(__dirname, me.repo))
     .then(function (repo) {
       _repository = repo;
 
@@ -69,10 +76,10 @@ class Git {
       return _repository.getCommit(head);
     })
     .then(function (parent) {
-      return _repository.createCommit('HEAD', this.signature, this.signature, 'Saves ' + file, _oid, [ parent ]);
+      return _repository.createCommit('HEAD', me.signature, me.signature, 'Saves ' + file, _oid, [ parent ]);
     })
     .then(function () {
-      return git.Remote.create(_repository, 'origin', this.repo)
+      return git.Remote.create(_repository, 'origin', me.repo)
         .then(function (remote) {
           remote.connect(git.Enums.DIRECTION.PUSH);
 

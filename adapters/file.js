@@ -24,12 +24,14 @@ class File {
    *
    * @constructor
    *
-   * @param {string} config - the configuration file path.
+   * @param {Object} configFile - configuration options.
    *
-   * @example new File('/path/to/hiera.yaml');
+   * @example new File({
+   *   configFile : '/path/to/hiera.yaml'
+   * });
    */
   constructor(config) {
-    this.config = config;
+    this.configFile = config.configFile;
   }
 
   /**
@@ -71,7 +73,7 @@ class File {
    * @example
    */
   readConfig(cb) {
-    fs.readFile(this.config, function (err, data) {
+    fs.readFile(this.configFile, function (err, data) {
       if (err) {
         cb(err);
         return;
@@ -92,7 +94,7 @@ class File {
    * @example
    */
   saveConfig(data, cb) {
-    fs.writeFile(this.config, j2y.stringify(data), cb);
+    fs.writeFile(this.configFile, j2y.stringify(data), cb);
   }
 }
 

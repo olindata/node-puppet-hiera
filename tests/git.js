@@ -112,9 +112,13 @@ suite('puppet-hiera', function () {
     ], done);
   });
 
-  suite('#init()', function () {
+  suite('#init() git adapter', function () {
     test('initializes Hiera module', function (done) {
-      hiera.init(fixture.configFile);
+      hiera.init('git', {
+        configFile : fixture.configFile,
+        repo       : '/home/rajkissu/Downloads/hiera-test/.git',
+        signature  : [ 'Raj Kissu', 'rajkissu@gmail.com', 123456789, 60 ]
+      });
       done();
     });
   });

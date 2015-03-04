@@ -7,25 +7,27 @@
 /* jslint node: true */
 'use strict';
 
-var path, async, yaml, File, fs;
+var path, async, yaml, fs;
 
 require('sugar');
 
 path  = require('path');
 async = require('async');
 yaml  = require('js-yaml');
-File  = require('./adapters/file');
 
 /**
  * Initializes the Hiera module.
  *
+ * @param {string} adapter - which adapter to use
  * @param {string} configFile - the path to `hiera.yaml`.
  *
  * @example init('/path/to/hiera.yaml');
  */
-function init(config) {
+function init(adapter, config) {
   if (!fs) {
-    fs = new File(config.configFile);
+    var Adapter = require('./adapters/' + adapter);
+
+    fs = new Adapter(config);
   }
 }
 
