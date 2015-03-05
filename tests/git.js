@@ -117,7 +117,7 @@ suite('puppet-hiera', function () {
       hiera.init('git', {
         configFile : fixture.configFile,
         repo       : '/home/rajkissu/Downloads/hiera-test/.git',
-        signature  : [ 'Raj Kissu', 'rajkissu@gmail.com', 123456789, 60 ]
+        signature  : { name : 'Raj Kissu', email : 'rajkissu@gmail.com' }
       });
       done();
     });

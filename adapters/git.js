@@ -28,14 +28,21 @@ class Git extends File {
    *
    * @example new Git({
    *   repo : '/path/to/repo.git',
-   *   signature : [ 'Name', '<email>', '123131', 60)
+   *   signature : { name : 'Name', email : '<email>' }
    * });
    */
   constructor(config) {
     super(config);
 
+    var signature = config.signature;
+
     this.repo = config.repo;
-    this.signature = git.Signature.create.apply(git.Signature, config.signature);
+    this.signature = git.Signature.create(
+      signature.name,
+      signature.email,
+      Date.now(),
+      0
+    );
   }
 
   /**
@@ -79,11 +86,11 @@ class Git extends File {
       return _repository.createCommit('HEAD', me.signature, me.signature, 'Saves ' + file, _oid, [ parent ]);
     })
     .then(function () {
-      return git.Remote.create(_repository, 'origin', me.repo)
+      return git.Remote.lookup(_repository, 'origin')
         .then(function (remote) {
-          remote.connect(git.Enums.DIRECTION.PUSH);
-
           var push;
+
+          remote.connect(git.Enums.DIRECTION.PUSH);
 
           // We need to set the auth on the remote, not the push object
           remote.setCallbacks({
@@ -93,19 +100,12 @@ class Git extends File {
           });
 
           // Create the push object for this remote
-          return git.Push.create(remote)
-          .then(function(pushResult) {
-            push = pushResult;
-
-            // This just says what branch we're pushing onto what remote branch
-            return push.addRefspec("refs/heads/master:refs/heads/master");
-          }).then(function() {
-            // This is the call that performs the actual push
-            return push.finish();
-          }).then(function() {
-            // Check to see if the remote accepted our push request.
-            return push.unpackOk();
-          });
+          return remote.push(
+            [ "refs/heads/master:refs/heads/master" ],
+            null,
+            _repository.defaultSignature(),
+            "Push to master"
+          );
         });
     })
     .done(cb);
