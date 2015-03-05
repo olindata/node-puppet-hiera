@@ -27,6 +27,7 @@ class Git extends File {
    * @param {Object} config - configuration options.
    *
    * @example new Git({
+   *   token : 'sometoken',
    *   repo : '/path/to/repo.git',
    *   signature : { name : 'Name', email : '<email>' }
    * });
@@ -36,12 +37,13 @@ class Git extends File {
 
     var signature = config.signature;
 
+    this.token = config.token;
     this.repo = config.repo;
     this.signature = git.Signature.create(
       signature.name,
       signature.email,
-      Date.now(),
-      0
+      Math.floor((new Date).getTime() / 1000),
+      480
     );
   }
 
@@ -88,22 +90,28 @@ class Git extends File {
     .then(function () {
       return git.Remote.lookup(_repository, 'origin')
         .then(function (remote) {
-          var push;
-
           remote.connect(git.Enums.DIRECTION.PUSH);
 
-          // We need to set the auth on the remote, not the push object
           remote.setCallbacks({
             credentials: function(url, userName) {
-              return git.Cred.sshKeyFromAgent(userName);
+              return git.Cred.userpassPlaintextNew(me.token, 'x-oauth-basic');
+            },
+
+            certificateCheck: function () {
+              return 1;
             }
           });
 
+          return remote;
+        })
+        .then(function (remote) {
+          var refs = ["refs/heads/master:refs/heads/master"];
+
           // Create the push object for this remote
           return remote.push(
-            [ "refs/heads/master:refs/heads/master" ],
+            refs,
             null,
-            _repository.defaultSignature(),
+            me.signature,
             "Push to master"
           );
         });

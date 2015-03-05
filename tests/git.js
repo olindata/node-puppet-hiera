@@ -11,7 +11,12 @@ hiera   = require('../index');
 assert  = chai.assert;
 
 fixture = {
-  configFile : __dirname + '/hiera.yaml',
+  adapterConfig : {
+    configFile : __dirname + '/hiera.yaml',
+    token      : 'adb029f5fedaeb74c6e279d57a691a771e7c4b9c',
+    repo       : '/home/rajkissu/Downloads/hiera-test',
+    signature  : { name : 'Raj Kissu', email : 'rajkissu@gmail.com' }
+  },
   nonFile    : '/file/does/not/exist.yaml',
 
   config     : {
@@ -104,7 +109,7 @@ suite('puppet-hiera', function () {
 
       function createHieraConfigFile(cb) {
         fs.writeFile(
-          fixture.configFile,
+          fixture.adapterConfig.configFile,
           j2y.stringify(fixture.config),
           cb
         );
@@ -114,11 +119,7 @@ suite('puppet-hiera', function () {
 
   suite('#init() git adapter', function () {
     test('initializes Hiera module', function (done) {
-      hiera.init('git', {
-        configFile : fixture.configFile,
-        repo       : '/home/rajkissu/Downloads/hiera-test/.git',
-        signature  : { name : 'Raj Kissu', email : 'rajkissu@gmail.com' }
-      });
+      hiera.init('git', fixture.adapterConfig);
       done();
     });
   });
@@ -206,12 +207,14 @@ suite('puppet-hiera', function () {
 
   suite('#saveFile', function () {
     test('saves key-value data to a Hiera file', function (done) {
+      this.timeout(10000);
+
       hiera.saveFile(
         'yaml',
         path.basename(fixture.hiera.yaml[0].file),
         j2y.stringify(fixture.hiera.yaml[0].data),
         function (err) {
-          assert.isNull(err);
+          assert.isUndefined(err);
 
           done();
         }
@@ -270,7 +273,7 @@ suite('puppet-hiera', function () {
       },
 
       function (cb) {
-        fs.unlink(fixture.configFile, cb);
+        fs.unlink(fixture.adapterConfig.configFile, cb);
       }
     ], done);
   });
