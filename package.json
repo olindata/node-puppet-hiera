@@ -1,6 +1,6 @@
 {
   "name": "puppet-hiera",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Module to interface with a hiera database",
   "main": "index.js",
   "repository": "https://github.com/olindata/node-puppet-hiera",
@@ -10,7 +10,7 @@
   "dependencies": {
     "js-yaml": "^3.2.1",
     "json2yaml": "^1.0.3",
-    "sugar": "^1.4.1",
+    "lodash": "^3.3.1",
     "nodegit": "git://github.com/nodegit/nodegit.git"
   },
   "devDependencies": {

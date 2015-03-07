@@ -85,7 +85,10 @@ class Git extends File {
       return _repository.getCommit(head);
     })
     .then(function (parent) {
-      return _repository.createCommit('HEAD', me.signature, me.signature, 'Saves ' + file, _oid, [ parent ]);
+      return _repository.createCommit(
+        'HEAD', me.signature, me.signature,
+        'Saves ' + file, _oid, [ parent ]
+      );
     })
     .then(function () {
       return git.Remote.lookup(_repository, 'origin')
@@ -105,14 +108,17 @@ class Git extends File {
           return remote;
         })
         .then(function (remote) {
-          var refs = ["refs/heads/master:refs/heads/master"];
+          var ref, refs;
+
+          ref = 'refs/heads/master';
+          refs = [ ref + ':' + ref ];
 
           // Create the push object for this remote
           return remote.push(
             refs,
             null,
             me.signature,
-            "Push to master"
+            'Push to master'
           );
         });
     })

@@ -9,8 +9,6 @@
 
 var path, async, yaml, fs;
 
-require('sugar');
-
 path  = require('path');
 async = require('async');
 yaml  = require('js-yaml');
@@ -194,7 +192,7 @@ function getOverrides(backend, file, cb) {
       sourceData = yaml.safeLoad(data);
 
       // setup hierarchy search tasks
-      searchHierarchy.each(function (hierarchy) {
+      _.each(searchHierarchy, function (hierarchy) {
         tasks.push(hierarchy + '.' + backend);
       });
 
@@ -215,9 +213,9 @@ function getOverrides(backend, file, cb) {
           return;
         }
 
-        Object.each(sourceData, function (key, value) {
-          comparisonData.each(function (set) {
-            Object.each(set.data, function (cKey, cValue) {
+        _.each(sourceData, function (key, value) {
+          _.each(comparisonData, function (set) {
+            _.each(set.data, function (cKey, cValue) {
               if (cKey === key) {
                 list[cKey] = {
                   file  : set.file,
